@@ -1,0 +1,136 @@
+-- Creació del keyspace per a l'aplicació de vídeo
+--
+CREATE KEYSPACE IF NOT EXISTS videossandra WITH REPLICATION = {'class':'SimpleStrategy', 'replication_factor':1};
+-- 
+USE videossandra;
+-- Creació de taules
+-- Creació de la taula d'usuaris
+-- id_user és la clau de la partició
+-- Com no hi ha cap query freqüent, es crea nua estructura genèrica
+-- La query per email es farà per índex
+CREATE TABLE user (
+	id_user text PRIMARY KEY,
+	email text,
+	name text,
+	surname text,
+	register_date timeuuid
+);
+-- Creació de la taula de vídeos
+-- Com a clau del cluster farem servir l'identificador de l'usuari
+-- D'aquesta forma, es desarà al mateix cluster que l'usuari que l'ha pujat
+-- La clau primària està formada per l'usuari i el vídeo
+-- No cream clustering columns
+CREATE TABLE video (
+	id_user text,
+	id_video text,
+	description text,
+	type text,
+	URL text,
+	upload_date timestamp,
+	puntuation_avg float,
+	genre_list set<text>,
+	PRIMARY KEY (id_user, id_video)
+);
+-- Creació de la taula de vídeos per ordre invers d'inserció
+-- Com a clau del cluster farem servir una cadena que indica el tipus de producte; això ens permetrà ordenar per dates
+-- La clau primària està formada per aquest valor, el moment d'inserció, l'usuari, el vídeo (aquest dos darrers es poden evitar)
+-- d'aquesta manera, conseguirem veure sempre el darrer vídeo publicat
+-- Les clustering columns són upload_date, id_user i id_video 
+CREATE TABLE video_by_upload_date (
+	producte text,
+	id_user text,
+	id_video text,
+	description text,
+	type text,
+	URL text,
+	upload_date timestamp,
+	puntuation_avg float,
+	genre_list set<text>,
+	PRIMARY KEY ((producte), upload_date, id_user, id_video)
+) WITH CLUSTERING ORDER BY (upload_date DESC);
+-- Creació de la taula de comentaris; per a afavorir les cerques, tendrem dues taules (una per usuari i una altra per video)
+-- id_user és la clau de la partició
+-- comment_date és les clustering columns
+-- L'ordenació es fa per comment_date per tal d'afavorir una de les cerques més comuns
+CREATE TABLE comment_by_user (
+	id_user text,
+	id_video text,
+	comment_date timestamp,
+	comment text,
+	PRIMARY KEY ((id_user), comment_date)
+) WITH CLUSTERING ORDER BY (comment_date DESC);
+-- Creació de la taula de comentaris; per a afavorir les cerques, tendrem dues taules (una per usuari i una altra per video)
+-- id_user és la clau de la partició
+-- comment_date és les clustering columns
+-- L'ordenació es fa per comment_date per tal d'afavorir una de les cerques més comuns
+CREATE TABLE comment_by_video (
+	id_user text,
+	id_video text,
+	comment_date timestamp,
+	comment text,
+	PRIMARY KEY ((id_video), comment_date)
+) WITH CLUSTERING ORDER BY (comment_date DESC);
+-- Creació de la tauna de valoracions
+-- El camp de puntuació és un float i no un enter perque entenc que es poden assignar decimals
+-- S'ha afegit el camp de id_user per a assignar una partició (tanmateix, tenim la dada)
+-- S'ha afegit el camp puntuation_date per a dur el registre de la data i crear una PK 
+CREATE TABLE puntuation (
+	id_user text,
+	id_video text,
+	puntuation_date timestamp,
+	puntuation float,
+	PRIMARY KEY (id_user, id_video, puntuation_date)
+);
+--
+-- Inserir registres
+--
+-- Usuaris
+INSERT INTO user (id_user, email, name, surname, register_date) VALUES ('usu1', 'usu1@uoc.edu', 'Tommy', 'Ramone', now());
+INSERT INTO user (id_user, email, name, surname, register_date) VALUES ('usu2', 'usu2@uoc.edu', 'Marky', 'Ramone', now());
+INSERT INTO user (id_user, email, name, surname, register_date) VALUES ('usu3', 'usu3@uoc.edu', 'Johnny', 'Ramone', now());
+INSERT INTO user (id_user, email, name, surname, register_date) VALUES ('usu4', 'usu4@uoc.edu', 'Joey', 'Ramone', now());
+INSERT INTO user (id_user, email, name, surname, register_date) VALUES ('usu5', 'usu5@uoc.edu', 'Dee Dee', 'Ramone', now());
+-- Vídeos
+INSERT INTO video (id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('usu1', 'Pulp Fiction', 'Pelicula de Tarantino','Llargmetratge', 'www.pulfiction.com', toTimestamp(now()), 8, {'Comedia', 'Tiros'});
+INSERT INTO video (id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('usu2', 'Citizen Kane', 'Pelicula de Welles','Llargmetratge', 'www.citizen.com', toTimestamp(now()), 9.5, {'Drama', 'Biopic'});
+INSERT INTO video (id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('usu1', 'Casablanca', 'Pelicula de Curtis','Llargmetratge', 'www.casablanca.com', toTimestamp(now()), 9, {'Drama'});
+INSERT INTO video (id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('usu1', 'Cinema Paradiso', 'Pelicula de Tornatore','Llargmetratge', 'www.cinema.com', toTimestamp(now()), 8, {'Drama'});
+INSERT INTO video (id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('usu2', 'El verdugo', 'Pelicula de Berlanga','Llargmetratge', 'www.verdugo.com', toTimestamp(now()), 8, {'Comedia negra'});
+--
+INSERT INTO video_by_upload_date (producte, id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('video', 'usu1', 'Pulp Fiction', 'Pelicula de Tarantino','Llargmetratge', 'www.pulfiction.com', toTimestamp(now()), 8, {'Comedia', 'Tiros'});
+INSERT INTO video_by_upload_date (producte, id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('video', 'usu2', 'Citizen Kane', 'Pelicula de Welles','Llargmetratge', 'www.citizen.com', toTimestamp(now()), 9.5, {'Drama', 'Biopic'});
+INSERT INTO video_by_upload_date (producte, id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('video', 'usu1', 'Casablanca', 'Pelicula de Curtis','Llargmetratge', 'www.casablanca.com', toTimestamp(now()), 9, {'Drama'});
+INSERT INTO video_by_upload_date (producte, id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('video', 'usu1', 'Cinema Paradiso', 'Pelicula de Tornatore','Llargmetratge', 'www.cinema.com', toTimestamp(now()), 8, {'Drama'});
+INSERT INTO video_by_upload_date (producte, id_user, id_video, description, type, URL, upload_date, puntuation_avg, genre_list) VALUES ('video', 'usu2', 'El verdugo', 'Pelicula de Berlanga','Llargmetratge', 'www.verdugo.com', toTimestamp(now()), 8, {'Comedia negra'});
+-- Comentaris
+INSERT INTO comment_by_user (id_user, id_video, comment_date, comment) VALUES ('usu1', 'Pulp Fiction', toTimestamp(now()), 'molt bona peli');
+INSERT INTO comment_by_video (id_user, id_video, comment_date, comment) VALUES ('usu1', 'Pulp Fiction', toTimestamp(now()), 'molt bona peli');
+INSERT INTO comment_by_user (id_user, id_video, comment_date, comment) VALUES ('usu2', 'Pulp Fiction', toTimestamp(now()), 'no me va agradar');
+INSERT INTO comment_by_video (id_user, id_video, comment_date, comment) VALUES ('usu2', 'Pulp Fiction', toTimestamp(now()), 'no me va agradar');
+INSERT INTO comment_by_user (id_user, id_video, comment_date, comment) VALUES ('usu1', 'Casablanca', toTimestamp(now()), 'està molt bé');
+INSERT INTO comment_by_video (id_user, id_video, comment_date, comment) VALUES ('usu1', 'Casablanca', toTimestamp(now()), 'està molt bé');
+-- Puntuacions
+INSERT INTO puntuation(id_user, id_video, puntuation_date, puntuation) values ('usu1', 'Pulp Fiction', toTimestamp(now()), 10);
+INSERT INTO puntuation(id_user, id_video, puntuation_date, puntuation) values ('usu2', 'Pulp Fiction', toTimestamp(now()), 5);
+--
+-- Creació d'indexos per a afavorir les cerques
+--
+-- Videos by gènere
+CREATE INDEX video_by_genre_idx ON video (genre_list);
+-- Usuaris per email especificat
+CREATE INDEX users_by_email_idx ON user (email);
+-- Queries
+-- Vídeos per gèneres
+SELECT * FROM video WHERE genre_list CONTAINS 'Drama';
+-- Comentaris per usuari ordenats per data de registre
+SELECT * FROM comment_by_user WHERE id_user = 'usu1';
+-- Comentaris per vídeo ordenats per data de registre
+SELECT * FROM comment_by_video WHERE id_video = 'Pulp Fiction';
+-- Trobar un usuari per email especificat
+SELECT * FROM user WHERE email = 'usu1@uoc.edu';
+-- Trobar l'últim vídeo pujat
+SELECT * FROM video_by_upload_date LIMIT 1;
+-- Trobar els comentaris sobre un vídeo concret
+SELECT * FROM comment_by_video WHERE id_video = 'Pulp Fiction';
+-- Vídeos per gènere
+SELECT * FROM video WHERE genre_list CONTAINS 'Drama';
