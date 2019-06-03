@@ -1,0 +1,41 @@
+1. Considerar l'usuari rellevant amb un nombre de seguidors, comptabilitzant els seguidors de primer i segon nivell de forma conjunta, és de 1436. Mostra el nom i el nombre de seguidors.
+
+MATCH (user:TwitterUser) <- [:FOLLOWS * 1..2] - (follower:TwitterUser)
+WITH user, count(follower) as followers
+WHERE followers = 1436
+RETURN user.userName, followers
+
+2. Considerar el tweet que ha tingut més retweets i respostes. Mostra la suma total de retweets i respostes, i els 20 primers caràcters del tweet.
+
+
+MATCH (reply:Tweet) - [:IS_A_REPLY_OF] -> (originalTweet:Tweet),
+    (retweet:Tweet) - [:IS_A_RETWEET_OF] -> (originalTweet:Tweet)
+WITH originalTweet, count(DISTINCT  reply) as numberReplies, count(DISTINCT  retweet) as numberRetweet
+ORDER BY (numberReplies + numberRetweet) DESC
+RETURN substring (originalTweet.text, 0, 20), numberReplies, numberRetweet
+LIMIT 1
+
+3. Obtenir el percentatge de tweets que estan geolocalitzats a la latitud 42.0355
+-- Nota: Multipliquem per 100.0 i 1.0 perque si no, ho tracta com a sencer i el resultat és 0
+-- Estic forçant un producte cartesià per a obtenir tots els tweets; el resultat és el mateix sense el distinct de count(DISTINCT  glt) 
+--  això és perque només hi ha 1 (si hi ha més, ja no se compleix)
+
+MATCH (glt:GeoLocatedTweet {lat: 42.0355}),
+    (tweet:Tweet)
+WITH count(DISTINCT  glt) as number_glt, count(DISTINCT  tweet) as number_tweet
+RETURN (number_glt * 100.0) / (number_tweet * 1.0)
+
+4. Considerar el sisè usuari que ha enviat més tweets geolocalitzats. Mostra el seu nom i el nombre de tweets.
+
+MATCH (glt:GeoLocatedTweet) <- [:HAS_WRITEN] - (user:TwitterUser)
+WITH count(glt) as number_glt, user
+ORDER BY number_glt DESC
+RETURN user.userName, number_glt
+SKIP 5
+LIMIT 1
+
+5. Considerar els tweets geolocalitzats que són rèpliques a altres tweets geolocalitzats. Mostra el nombre de tweets que són rèpliques on la diferència en valor absolut entre les latituds que caracteritzen la rèplica i al tweet replicat és més gran que 20.
+
+MATCH (reply:GeoLocatedTweet) - [:IS_A_REPLY_OF] -> (originalTweet:GeoLocatedTweet)
+WHERE (reply.lat - originalTweet.lat < -20 OR reply.lat - originalTweet.lat > 20)
+RETURN count(reply) as repliesNumber

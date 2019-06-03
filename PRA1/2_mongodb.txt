@@ -1,16 +1,57 @@
--- Trobar tots els usuaris que hagin bloquejat a usuaris que procedeixen de
+-- 1, Trobar tots els usuaris que hagin bloquejat a usuaris que procedeixen de
 -- Pamplona i tenen entre 20 i 40 anys. Mostra el nom i cognoms. (Pista: 2
 -- registres)
 -- Registrs:
-db.Usuarios_bloqueadores.find({'Bloqueos.Usuario_bloqueado.Ciudad' : 'Pamplona', 'Bloqueos.Usuario_bloqueado.Edad' : {$gt : 19}, 'Bloqueos.Usuario_bloqueado.Edad' : {$lt : 41}}, {_id : 0, "Nombre" : 1, "Apellidos" : 1, "Bloqueos.Usuario_bloqueado.Ciudad" : 1, "Bloqueos.Usuario_bloqueado.Edad" : 1}).pretty()
+mongodb.Usuarios_bloqueadores.find({'Bloqueos.Usuario_bloqueado.Ciudad' : 'Pamplona', 'Bloqueos.Usuario_bloqueado.Edad' : {$gt : 19}, 'Bloqueos.Usuario_bloqueado.Edad' : {$lt : 41}}, {_id : 0, "Nombre" : 1, "Apellidos" : 1, "Bloqueos.Usuario_bloqueado.Ciudad" : 1, "Bloqueos.Usuario_bloqueado.Edad" : 1}).pretty()
 -- Nombre de registres:
 db.Usuarios_bloqueadores.find({'Bloqueos.Usuario_bloqueado.Ciudad' : 'Pamplona', 'Bloqueos.Usuario_bloqueado.Edad' : {$gt : 19}, 'Bloqueos.Usuario_bloqueado.Edad' : {$lt : 41}}).count()
 
--- Trobar quants usuaris són membres alhora dels grups: "Intercanvi de videojocs" i "Jugadors d'escacs"
+-- 2. Trobar quants usuaris són membres alhora dels grups: "Intercanvi de videojocs" i "Jugadors d'escacs"
 db.Usuarios_grupos.find({'Grupos_miembro.Nombre_Grupo' : {$all : ['Intercambio de videojuegos', 'Jugadores de ajedrez']}}, {_id:0, "Nombre":1, "Apellidos":1})
 
--- Trobar tots els grups que tinguin membres de Valladolid o que no en tinguin cap de Madrid. Mostra el nom de grup i identificador del grup.
+-- 3. Trobar tots els grups que tinguin membres de Valladolid o que no en tinguin cap de Madrid. Mostra el nom de grup i identificador del grup.
 db.Grupos_usuarios.find({$or : [{'Miembros.Ciudad' : {$nin : ['Madrid']}}, {'Miembros.Ciudad' : 'Valladolid'}]}, {_id : 0, Identificador : 1})
 
--- Crear la col·lecció "ciutats_usuaris" que contingui per cada ciutat un llistat d'usuaris amb les dades: nom, cognoms, 
+-- 4. Crear la col·lecció "ciutats_usuaris" que contingui per cada ciutat un llistat d'usuaris amb les dades: nom, cognoms, 
 -- email i nombre de grups als quals pertany
+
+-- Primer cream una variable que contendrà 
+var groupdata = db.Contactos_usuarios.aggregate(
+    {
+        $group : {
+            _id : '$Ciudad', usuarios : {
+                $addToSet : {
+                    Id : 'Identificador',
+                    Nombre : '$Nombre', 
+                    Apellidos : '$Apellidos', 
+                    Email : '$Email'
+                }
+            }
+        }
+    }
+)
+-- Cream la col·lecció amb les dades (fa)
+db.ciutats_usuaris.insert(groupdata.toArray())
+-- Cream una variable amb els usuaris i el nombre de grups per usuaris 
+var resumen_grupo = db.Usuarios_grupos.aggregate (
+    [
+        {
+            $project : {_id : 1, Id : "$Identificador", Numero_grupos:{}$size:"$Grupos_miembro"}
+        }
+    ]
+)
+db.resumen_grups_usuaris.insert(resumen_grupo.toArray())
+
+-- 5. Indicar quins índexs crearies per millorar el rendiment de la consulta.
+-- Jo crearia un índex que inclogués els camps dels filtres
+-- i els camps a mostrar per tal d'evitar accedir a la col·lecció original
+
+db.Usuario_desbloqueado.createIndex(
+    {
+        "Ciudad":1, 
+        "Edad":1,       
+        "_id":1,           
+        "Nombre":1,         
+        "Apellidos":1,        
+    }
+)
