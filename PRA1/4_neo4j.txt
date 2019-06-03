@@ -1,0 +1,73 @@
+-- Creació de carrers
+CREATE (n1:Calle { nombre: 'Ramón y Cajal'})
+CREATE (n2:Calle { nombre: 'Cervantes'})
+
+-- Creació de municipis
+CREATE (n1:Municipio { nombre: 'Torrejón de Ardoz'})
+CREATE (n2:Municipio { nombre: 'Segovia'})
+CREATE (n3:Municipio { nombre: 'Albolote'})
+CREATE (n4:Municipio { nombre: 'Onda'})
+CREATE (n5:Municipio { nombre: 'Tarrasa'})
+CREATE (n6:Municipio { nombre: 'Alcalá de Henares'})
+CREATE (n7:Municipio { nombre: 'Peñaranda de Bracamonte'})
+CREATE (n8:Municipio { nombre: 'Armilla'})
+CREATE (n9:Municipio { nombre: 'Villajoyosa'})
+CREATE (n10:Municipio { nombre: 'Badalona'})
+
+-- Creació de províncies
+CREATE (n1:Provincia { nombre: 'Madrid'})
+CREATE (n2:Provincia { nombre: 'Segovia'})
+CREATE (n3:Provincia { nombre: 'Granada'})
+CREATE (n4:Provincia { nombre: 'Castellón de la Plana'})
+CREATE (n5:Provincia { nombre: 'Barcelona'})
+CREATE (n6:Provincia { nombre: 'Salamanca'})
+CREATE (n7:Provincia { nombre: 'Alicante'})
+
+-- Creació de CCAA
+CREATE (n1:Ccaa { nombre: 'Madrid'})
+CREATE (n2:Ccaa { nombre: 'Castilla y León'})
+CREATE (n3:Ccaa { nombre: 'Andalucía'})
+CREATE (n4:Ccaa { nombre: 'Valencia'})
+CREATE (n5:Ccaa { nombre: 'Cataluña'})
+
+-- Cream rel·lacions de províncies amb CCAA
+MATCH (a:Provincia),(b:Ccaa) WHERE a.nombre = 'Madrid' AND b.nombre = 'Madrid' CREATE (a)-[r:ES_PROVINCIA_DE]->(b) RETURN type(r)
+MATCH (a:Provincia),(b:Ccaa) WHERE a.nombre = 'Segovia' AND b.nombre = 'Castilla y León' CREATE (a)-[r:ES_PROVINCIA_DE]->(b) RETURN type(r)
+MATCH (a:Provincia),(b:Ccaa) WHERE a.nombre = 'Granada' AND b.nombre = 'Andalucía' CREATE (a)-[r:ES_PROVINCIA_DE]->(b) RETURN type(r)
+MATCH (a:Provincia),(b:Ccaa) WHERE a.nombre = 'Castellón de la Plana' AND b.nombre = 'Valencia' CREATE (a)-[r:ES_PROVINCIA_DE]->(b) RETURN type(r)
+MATCH (a:Provincia),(b:Ccaa) WHERE a.nombre = 'Barcelona' AND b.nombre = 'Cataluña' CREATE (a)-[r:ES_PROVINCIA_DE]->(b) RETURN type(r)
+MATCH (a:Provincia),(b:Ccaa) WHERE a.nombre = 'Salamanca' AND b.nombre = 'Castilla y León' CREATE (a)-[r:ES_PROVINCIA_DE]->(b) RETURN type(r)
+MATCH (a:Provincia),(b:Ccaa) WHERE a.nombre = 'Alicante' AND b.nombre = 'Valencia' CREATE (a)-[r:ES_PROVINCIA_DE]->(b) RETURN type(r)
+
+-- Cream rel·lacions de municipis amb províncies
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Torrejón de Ardoz' AND b.nombre = 'Madrid' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Segovia' AND b.nombre = 'Segovia' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Albolote' AND b.nombre = 'Granada' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Onda' AND b.nombre = 'Castellón de la Plana' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Tarrasa' AND b.nombre = 'Barcelona' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Alcalá de Henares' AND b.nombre = 'Madrid' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Peñaranda de Bracamonte' AND b.nombre = 'Salamanca' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Armilla' AND b.nombre = 'Granada' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Villajoyosa' AND b.nombre = 'Alicante' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+MATCH (a:Municipio),(b:Provincia) WHERE a.nombre = 'Badalona' AND b.nombre = 'Barcelona' CREATE (a)-[r:ES_MUNICIPIO_DE]->(b) RETURN type(r)
+
+-- Cream rel·lacions de carrers
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Ramón y Cajal' AND b.nombre = 'Torrejón de Ardoz' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Ramón y Cajal' AND b.nombre = 'Segovia' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Ramón y Cajal' AND b.nombre = 'Albolote' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Ramón y Cajal' AND b.nombre = 'Onda' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Ramón y Cajal' AND b.nombre = 'Tarrasa' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Cervantes' AND b.nombre = 'Alcalá de Henares' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Cervantes' AND b.nombre = 'Peñaranda de Bracamonte' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Cervantes' AND b.nombre = 'Armilla' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Cervantes' AND b.nombre = 'Villajoyosa' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+MATCH (a:Calle),(b:Municipio) WHERE a.nombre = 'Cervantes' AND b.nombre = 'Badalona' CREATE (a)-[r:ES_CALLE_DE]->(b) RETURN type(r)
+
+CREATE (n1:Calle { nombre: 'Ramón y Cajal'})
+CREATE (n2:Calle { nombre: 'Cervantes'})
+
+MATCH p = () - [M:ES_CALLE_DE] -> () - [r:ES_MUNICIPIO_DE]-> () - [l:ES_PROVINCIA_DE] -> () RETURN p
+
+MATCH (Calle : Calle {nombre : 'Ramón y Cajal'})
+RETURN Calle.nombre
